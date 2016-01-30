@@ -1,0 +1,267 @@
+************************************************************************
+            FTVd: Fast Total Variation Deconvolution Package
+************************************************************************
+
+Copyright (C) 2008 Junfeng Yang, Yin Zhang, Wotao Yin and Yilun Wang
+
+1). Get Started
+===================
+
+   Before running any FTVd solvers, users have to make sure that all
+folders are in the MATLAB working paths. Three feasible ways to do
+this are: 
+   
+   a) run demo file "FTVdDemo" directly, which will add relevant folders
+      to MATLAB working paths automatically; (recommended)
+   b) run "FTVdStartup" in MATLAB command window; 
+   c) add paths mannually.
+
+
+2). Introduction
+====================
+   
+   FTVd refers to Fast Total Variation (TV) Deconvolution and is a TV
+based deconvolution package. FTVd version 1.0 was released on Oct. 9,
+2007.  FTVd version 2.0 is a major upgrade to Version 1.0.
+ 
+Compared with ver.1.0, this version has improved parameter selections
+in continuation and stopping criterion. More importantly, FTVd_v2.0
+has a much expaned capability including color image restoration and
+impulsive noise elimination.
+
+FTVd aims at solving the ill-possed inverse problem: approximately 
+recover image ubar from
+
+                   f = K*ubar + omega,                              (1)
+
+where ubar is an original image, K is a convolution matrix, omega 
+is addtive noise and f is the blurry and noisy observation of ubar. 
+
+Given K and f, FTVd tries to recover ubar by solving TV regularization 
+problems.  Generally, TV regularization problems include:
+
+       TVL2 model:  min_u TV(u) + mu/2 ||K*u - f||^2,               (2)
+
+which is applied when the additive noise is Gaussian, and
+
+       TVL1 model:  min_u TV(u) + mu * ||K*u - f||_1,               (3)
+
+which is applied when the additive noise is impulsive (e.g., salt-and-
+pepper noise and random-valued noise). In (2) and (3), ||K*u - f|| and
+||K*u - f||_1 are data fidelities, TV(u) is the total variation of u,
+and mu > 0 are balancing parameter.   For a gray-scale image u, the
+discrete TV of u is
+
+                TV(u) = sum_i ||(D_i)u||,                           (4)
+
+where (D_i)u in R^2 is the local finite difference of u at pixel i in
+horizontal and vertical directions. If the norm in (4) is set to be
+the 2-norm, TV(u) is isotropic. If the norm in (4) is the 1-norm, then
+it is anisotropic.  Currently, this package includes only isotropic
+cases (except one anisotropic TVL1 solver for recovering grayscale
+images) and the corresponding anisotropic cases can be easily coded.
+
+
+3). Solvers  
+====================
+
+   FTVd includes 4 main solvers: FTVdG, FTVdC, FTVdL1G and FTVdL1C.
+
+ a) FTVdG   --- solves (2) for gray scale image deconvolution and
+                Gaussian noise elimination;
+ b) FTVdC   --- solves (2) for RGB color image deconvolution and 
+                Gaussian noise elinination;
+ c) FTVdL1G --- solves (3) for gray scale image deconvolution and
+                impulsive noise removal;
+ d) FTVdL1C --- solves (3) for RGB color image deconvolution and 
+                impulsive noise removal.
+For RGB images, corresponding solvers used a multichannel extenstion
+of TV for the single-channel TV in (2) and (3). Denote the multichannel
+TV by MTV. Then discrete MTV(u) is
+
+                MTV(u) = sum_i || kron(I_3,D_i)u ||,
+
+where kron(*,*) represents the Kronecker product. 
+
+Besides the four solvers listed above, there are also another two TVL2
+solvers FTVdHG and FTVdHC and one TVL1 solver FTVdanisoL1G.  Here, the
+two TVL2 solvers included the 2nd order derivatives as well as the 1st
+order derivatives as regularization, and the TVL1 solver FTVdanisoL1G
+solves the anisotropic case of (3); i.e., the 2-norm is replaced by
+the 1-norm in (4), for grayscale images.
+
+In the names of these solves, "G" implies that solvers are appliable
+to grayscale image; "C" implies that solvers are appliable to RGB
+color image; "H" means that, inaddition to the 1st-order derivatives,
+the higher, 2nd-order derivatives of u are also included in
+regularization.
+
+All solvers are called in the following way:
+
+               [U,Out] = solver(Bn,H,mu,opts), 
+
+where Bn is the blurry and noiy observation f, H is the convolution
+kernel, mu is the Lagrangian multiplier and opts contains algorithm
+parameters. For gray scale images, H is a small matrix representing
+the convolution kernel; and for RGB color images, H is a 3-by-3 cell
+array carrying the cross-channel convolution kernels. Input opts is
+a structure that controls the solver, includeing penalty parameters,
+inner tolerance, initial point, etc. Users may want to know the 
+followings fields of opts:
+   opts.beta0     -- initial penalty parameter beta
+   opts.beta_max  -- maximum penalty parameter beta
+   opts.beta_rate -- increase rate of beta
+   opts.tol_inn   -- tolerance of inner optimality residues
+   opts.mit_inn   -- maximum inner iteration number for fixed beta
+   opts.chk_opt_u -- controls if or not to check the residue of u after
+                     all other residues are smaller than tol_inn; As we
+                     have observed, res_u are usually much more easy to
+                     satisfy the residue requirement. Since the comput-
+                     ation of res_u is the most expensive, users can
+                     check res_u afte all other residues are less than 
+                     tol_inn. So, if users set opts.chk_opt_u ~= 0, then
+                     res_u will be checked before jumping out the inner
+                     iteration. Otherwise, FTVd solvers only check other 
+                     residues. After all other residues are less than 
+                     tol_inn, solvers "trust" res_u also less than 
+                     tol_inn and do not check it.
+
+For TVL1 solvers, the fields beta0, beta_rate and beta_max are replaced
+by "betaSeq" and "gammaSeq" which carry two sequences of penalty param-
+eters corresponding to auxiliary variables W and Z. For more details 
+about opts and algorithmic inputs, see the interfaces of relevant solvers 
+and relevant references given below in 5).
+
+There is also a file under the folder "solvers" called FTVd.m. This
+file is an interface which will find a proper solver automatically
+based on the inputs.  The useage of FTVd.m is:
+
+               [U,Out] = FTVd(Bn,H,mu,opts,isNGaussian);
+
+where Bn, H, mu, opts are as explained above and "isNGaussian" is a
+parameter indicates that whether or not the additive noise is
+Gaussian. If the additive noise is not Gaussian, then user should set
+isNGaussian = 0; otherwise, set isNGaussian = 1.
+
+Note:   a) Cross-channel blurring is permitted in both TVL2 solvers and 
+           TVL1 solvers for RGB images.
+        b) Local weighted TV regularization is permitted in all the 
+           TVL2 solvers in this package.
+        c) Local weighted TV regularization is not included in all the 
+           TVL1 solvers in this package (though it can be coded easily).
+        d) High-order derivatives regularization (1st and 2nd order) 
+           is included in FTVdHG (for grayscale images) and FTVdHC (for 
+           RGB color images), both for a TVL2-type model.
+        e) High-order derivatives regularization is not included in
+           all TVL1 solvers currently, though this can be coded in a 
+           similar way as in FTVdHG and FTVdHC. 
+
+
+4). Demos and other M-files
+===========================
+
+   This package includes 7 demonstration M files:
+
+   a) demoTVL2G      --- demonstrates how to use "FTVdG.m" to do 
+                         deconvolution and Gaussian noise elimination by 
+                         solving (2) for recovering gray scale images.
+
+   b) demoTVL2C_cross --- shows how to use "FTVdC.m" to do cross-channel 
+                          deconvolution and Gaussian noise elimination by 
+                          solving (2) for recovering RGB color images.
+
+   c) demoTVL1G       --- shows how to use "FTVdL1G.m" to do deconvolution   
+                          and impulsive noise removal by solving (3) for 
+                          recovering gray scale images.
+
+   d) demoTVL1C       --- demonstrates how to use "FTVdL1C.m" to do cross-
+                          channel deconvolution and impulsive noise removal 
+                          by solving (3) for recovering RGB color images.
+
+  Besides, demoTVL2C_within compares FTVdC with MATLAB deconvolution
+  solvers for within-channel deconvolution; demoWTV demonstrates how
+  to use local weights to improve restoration quality; and demoHTV
+  demonstrates how to use high-order (1st and 2nd) derivatives
+  regularization to reduce staircasing caused by the first-order TV
+  regularization.
+
+  NOTE: Users can not run any demo files before adding paths to MATLAB
+  working path. See 3) Get Started.  After adding relevant folders to
+  paths, one can run each demo files in the folder "demofiles" 
+  individually.  
+
+  We recomend users to run "FTVdDemo.m" directly which includes all 
+  demos in folder "demofiles".
+
+  Other functions under "solvers\Utilities" include fixH, fixWeights,
+  snr, imfilter33, getFTVdL2opts and getFTVdL1opts. All these
+  functions are used and only used by the the core solvers. 
+  Specifically,
+
+    snr           --- computing signal to noise ratio of an image
+    fixH          --- padding one zero column and/or zero row to convolu- 
+                      tion kernel when a kernel is not odd-sized, and make 
+                      sure that H is a 3 by 3 cell array for RGB images.
+    fixWeights    --- for weighted TV regularization, fixWeights checks if 
+                      a matrix carries positive weights or is a constant. 
+    imfilter33    --- for RGB images, when there is cross-channel convolu-
+                      tion involved, imfilter33 computes K*u and K'*u.
+    getFTVdL2opts --- given a structure variable "opts", getFTVdL2opts gets
+                      relevant parameters for TVL2 solvers. opts can be 
+                      empty. 
+    getFTVdL1opts --- given a structure variable "opts", getFTVdL2opts gets
+                      relevant parameters for TVL1 solvers. opts can be 
+                      empty.
+
+  All M-files under the folder "genData" are only used in demo files
+  for preparation of simulation. M-files under "disp" are used for
+  display restoraiton results in demo files. The folder "images"
+  contains the images used in demo files.
+
+
+5). References
+====================
+
+    For algorithmic details, such as continution on penalty parameters and 
+ optimality conditions, see references:
+
+  [1] Y. Wang, J. Yang, W. Yin and Y. Zhang, "A New Alternating Minimiza-
+      tion Algorithm for Total Variation Image Reconstruction", 
+      SIAM Journal on Imaging Sciences, 1(3), 248-272, 2008.
+
+  [2] J. Yang, W. Yin, Y. Zhang and Y. Wang, "A Fast Algorithm for Edge-
+      Preserving Variational Multichannel Image Restoration", SIAM Journal 
+      on Imaging Sciences, 2(2), 569-592, 2009.
+
+  [3] J. Yang, Y. Zhang and W. Yin, "An efficient TVL1 algorithm for 
+      deblurring multichannel images corrupted by impulsive noise",
+      SIAM Journal on Scientific Computing, 31(4), 2842-2865, 2009.
+
+
+6). Contact Information
+=======================
+
+   FTVd is available at:
+   http://www.caam.rice.edu/~optimization/L1/ftvd/
+
+Please feel free to e-mail the following authors with any comments 
+or suggestions:
+
+Junfeng Yang,  Depart. Math., Nanjing Univ.,  <jfyang@nju.edu.cn>
+Yilun Wang,    CAAM, Rice University,         <yilun.wang@rice.edu>
+
+
+7).  Copyright Notice
+====================
+
+   FTVd is free software; you can redistribute it and/or modify it under 
+the terms of the GNU General Public License as published by the Free 
+Software Foundation; either version 3 of the License, or (at your option) 
+any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+General Public License for more details at
+<http://www.gnu.org/licenses/>. 
+

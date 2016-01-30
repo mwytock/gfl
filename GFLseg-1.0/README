@@ -1,0 +1,68 @@
+This is the GFLseg package for multiple change-point detection in
+multi-dimensional signals.
+
+Copyright 2009-2011, Kevin Bleakley and Jean-Philippe Vert.
+
+INTRODUCTION 
+GFLseg implements the group fused Lasso method for multiple
+change-point detections in a multidimensional signal. Two algorithms are
+implemented. The first is an exact solver for the group fused Lasso. The
+second is the group fused LARS, which is faster but less accurate. In
+addition, segmentation by dynamic programming is also implemented. This
+is more accurate but much slower. GFLseg contains also functions to
+automatically process array CGH data.
+
+
+INSTALLATION 
+To run this software you need MATLAB (tested on MATLAB 7,
+version R2009b). To use the software, you just need to let MATLAB know
+where the functions are. For this, suppose the current file is in the
+directory "<installpath>/GFLseg". You need to start MATLAB and, at the
+command prompt type:
+>> addpath(genpath('<installpath>/GFLseg'))
+
+
+USAGE 
+If you have a p-dimensional signal of length n in a n*p matrix Y,
+the simplest way to use GFLseg is to type at the MATLAB prompt: 
+>> segmentation = simpleGFL(Y) 
+It will find candidate change-points in Y with the group Lars method, and
+then fine-tune the change-point selection with dynamic programming. The
+location of the change-points will be available in the segmentation.jumps 
+vector. For more details and options, type:
+>> help simpleGFL
+
+The simpleGFL function is a wrapper for several functions that perform
+specific tasks. You can call also them directly:
+  gflars.m : segmentation with the group fused LARS for a given number of
+             breakpoints. 
+  gflasso.m : segmentation with the group fused Lasso for a given set of
+              regularization parameter(s). 
+  gflassoK.m : segmentation  with the group fused Lasso for a given 
+              number of breakpoints.
+  gflassoKatleast.m : segmentation with the group fused Lasso for at
+              least a given number of breakpoints. 
+  dpseg.m : segmentation by dynamic programming and automatic selection 
+            of the number of change-points
+
+If you have CGH array data, you may directly type the following to
+perform joint segmentation on each chromosome and output a file in seeGH
+format: 
+>> gainlossCGH(clonefile,datafile,outfile) 
+
+The "demo/" directory contain a number of demonstration scripts to
+illustrate the use of GFLseg. For each function, detailed explanations
+and available options are obtained by typing at the Matlab prompt:
+>> help <function_name>
+
+LICENSE 
+GFLseg is licensed under the GPL version 3 or any later version
+(see LICENSE)
+
+REFERENCE 
+If you use this package please cite the following reference: 
+K. Bleakley and J.-P. Vert, The group fused Lasso for multiple change-point detection. 2011.
+
+CONTACT
+Jean-Philippe.Vert@mines.org
+kevbleakley@gmail.com

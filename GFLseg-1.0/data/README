@@ -1,0 +1,18 @@
+Lung
+A collection of 39 lung cancer cell lines, originally published in [1,2] and studied in [3]. We obtained these data from the CNA-HMMer package [4].
+lungClones.txt : the names of the clones
+lungData.txt :   the log-ratio of all clones on all samples
+
+
+Bladder
+A collection 57 array CGH profiles of bladder tumor samples, from [5]. Each sample is represented by 2143 probes along non-sexual chromosomes.
+bladderClones.txt : the names of the clones
+bladderData.txt :   the log-ratio of all clones on all samples
+
+
+References:
+[1] Coe,B.P. et al. (2006) Differential disruption of cell cycle pathways in small cell and non-small cell lung cancer. Br. J. Cancer, 94, 1927–1935.
+[2] Garnis,C. et al. (2006) High resolution analysis of non-small cell lung cancer cell lines by whole genome tiling path array CGH. Int. J. Cancer., 118, 1556–1564.
+[3] Shar, S.P. et al. (2007) Modeling recurrent DNA copy number alterations in array CGH data. Bioinformatics, 23, i450-i458.
+[4] Available at http://www.cs.ubc.ca/~sshah/acgh
+[5] Stransky, N. et al. (2006) Regional copy number-independent deregulation of transcription in cancer. Nat. Genet., 38(12):1386-1396.
